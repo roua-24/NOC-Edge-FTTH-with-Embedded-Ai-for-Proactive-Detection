@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Schéma Architecture + DFD — NOC-Edge FTTH</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #f8f9fb;
+    --surface: #ffffff;
+    --border: #e1e4e8;
+    --text: #1c2027;
+    --muted: #6b7280;
+    --blue: #2563eb;
+    --blue-light: #eff6ff;
+    --green: #16a34a;
+    --green-light: #f0fdf4;
+    --orange: #ea580c;
+    --orange-light: #fff7ed;
+    --purple: #7c3aed;
+    --purple-light: #f5f3ff;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --teal: #0d9488;
+    --teal-light: #f0fdfa;
+    --amber: #d97706;
+    --amber-light: #fffbeb;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Syne', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 24px;
+  }
+
+  /* Header */
+  .header {
+    max-width: 1100px;
+    margin: 0 auto 48px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .header h1 { font-size: 28px; font-weight: 800; }
+  .header h1 span { color: var(--blue); }
+  .header .subtitle { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .header .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    background: var(--text);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  /* Main grid */
+  .grid {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 24px;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar { display: flex; flex-direction: column; gap: 12px; }
+  .sidebar-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .sidebar-header {
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: white;
+    padding: 8px 14px;
+    font-weight: 600;
+  }
+  .sidebar-body { padding: 10px 14px; }
+  .sidebar-item {
+    font-size: 11px;
+    color: var(--text);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sidebar-item:last-child { border: none; }
+  .sidebar-item .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── Main canvas ── */
+  .canvas {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+  }
+
+  /* DFD style */
+  .dfd {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Process box */
+  .process {
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: 10px;
+    border: 2px solid;
+    position: relative;
+    cursor: default;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .process:hover {
+    transform: translateX(4px);
+    box-shadow: -4px 0 0 currentColor, 4px 4px 12px rgba(0,0,0,0.08);
+  }
+
+  .proc-num {
+    width: 48px; height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .proc-info { flex: 1; }
+  .proc-name { font-size: 15px; font-weight: 700; }
+  .proc-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .proc-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .file-chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  .proc-libs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-end;
+  }
+  .lib-chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* Arrow between processes */
+  .dfd-arrow {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    align-items: center;
+    gap: 16px;
+    padding: 0 20px;
+    height: 32px;
+  }
+  .arrow-spacer { /* space under number */ }
+  .arrow-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+  .arrow-line {
+    flex: 1;
+    height: 1px;
+    background: repeating-linear-gradient(
+      to right,
+      var(--border) 0,
+      var(--border) 4px,
+      transparent 4px,
+      transparent 8px
+    );
+    position: relative;
+  }
+  .arrow-line::after {
+    content: '▼';
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .arrow-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--blue);
+    background: var(--blue-light);
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    border: 1px solid #bfdbfe;
+  }
+
+  /* Color classes */
+  .p-data    { border-color: var(--purple); background: var(--purple-light); }
+  .p-data    .proc-num { background: var(--purple); color: white; }
+  .p-parsing { border-color: var(--blue); background: var(--blue-light); }
+  .p-parsing .proc-num { background: var(--blue); color: white; }
+  .p-kpi     { border-color: var(--green); background: var(--green-light); }
+  .p-kpi     .proc-num { background: var(--green); color: white; }
+  .p-ia      { border-color: var(--orange); background: var(--orange-light); }
+  .p-ia      .proc-num { background: var(--orange); color: white; }
+  .p-sec     { border-color: var(--red); background: var(--red-light); }
+  .p-sec     .proc-num { background: var(--red); color: white; }
+  .p-ui      { border-color: var(--teal); background: var(--teal-light); }
+  .p-ui      .proc-num { background: var(--teal); color: white; }
+  .p-report  { border-color: var(--amber); background: var(--amber-light); }
+  .p-report  .proc-num { background: var(--amber); color: white; }
+
+  /* File chips by module */
+  .fc-purple { background: var(--purple-light); color: var(--purple); border: 1px solid #c4b5fd; }
+  .fc-blue   { background: var(--blue-light); color: var(--blue); border: 1px solid #93c5fd; }
+  .fc-green  { background: var(--green-light); color: var(--green); border: 1px solid #86efac; }
+  .fc-orange { background: var(--orange-light); color: var(--orange); border: 1px solid #fdba74; }
+  .fc-red    { background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; }
+  .fc-teal   { background: var(--teal-light); color: var(--teal); border: 1px solid #99f6e4; }
+  .fc-amber  { background: var(--amber-light); color: var(--amber); border: 1px solid #fcd34d; }
+
+  /* Lib chips */
+  .lc-blue   { background: var(--blue); color: white; }
+  .lc-green  { background: var(--green); color: white; }
+  .lc-orange { background: var(--orange); color: white; }
+  .lc-teal   { background: var(--teal); color: white; }
+  .lc-amber  { background: var(--amber); color: white; }
+  .lc-red    { background: var(--red); color: white; }
+  .lc-muted  { background: #e5e7eb; color: var(--text); }
+
+  /* Outputs section */
+  .outputs-section { max-width: 1100px; margin: 24px auto 0; }
+  .outputs-title {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .outputs-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .output-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .output-icon { font-size: 24px; flex-shrink: 0; }
+  .output-info .title { font-size: 13px; font-weight: 700; }
+  .output-info .path { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* Summary bar */
+  .summary { max-width: 1100px; margin: 24px auto 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .sum-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .sum-card .num { font-size: 22px; font-weight: 800; }
+  .sum-card .lbl { font-size: 10px; color: var(--muted); margin-top: 3px; font-family: 'IBM Plex Mono', monospace; }
+
+  footer { text-align: center; margin-top: 36px; font-size: 11px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Schéma d'Architecture <span>NOC-Edge FTTH</span></h1>
+    <div class="subtitle">Diagramme de flux de données (DFD Niveau 1) · Pipeline modulaire offline</div>
+  </div>
+  <span class="tag">Python 3.10+ · Semaine 2</span>
+</div>
+
+<div class="grid">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="sidebar-header" style="background:var(--blue)">Données entrantes</div>
+      <div class="sidebar-body">
+        <div class="sidebar-item"><div class="dot" style="background:var(--purple)"></div>data/traces/*.pcap</div>
+        <div class="sidebar-item"><div class="dot" style="background:var(--purple)"></div>data/snmp/*.txt</div>
+        <div class="sidebar-item"><div class="dot" style="background:var(--purple)"></div>data/csv/*.csv</div>
+        <div class="sidebar-item" style="color:var(--muted);font-size:10px">Volume : ~982 000 lignes</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-header" style="background:var(--green)">Contraintes CDC</div>
+      <div class="sidebar-body">
+        <div class="sidebar-item"><div class="dot" style="background:var(--green)"></div>Parsing ≥ 90%</div>
+        <div class="sidebar-item"><div class="dot" style="background:var(--green)"></div>F1-score ≥ 85%</div>
+        <div class="sidebar-item"><div class="dot" style="background:var(--green)"></div>KPI ≤ 1s / 10k pts</div>
+        <div class="sidebar-item"><div class="dot" style="background:var(--green)"></div>UI rendu ≤ 1.5s</div>
+        <div class="sidebar-item"><div class="dot" style="background:var(--green)"></div>100% offline</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-header" style="background:var(--orange)">Tests unitaires</div>
+      <div class="sidebar-body">
+        <div class="sidebar-item"><div class="dot" style="background:var(--orange)"></div>test_kpi_builder.py</div>
+        <div class="sidebar-item"><div class="dot" style="background:var(--orange)"></div>test_detection.py</div>
+        <div class="sidebar-item"><div class="dot" style="background:var(--orange)"></div>test_parsing.py</div>
+        <div class="sidebar-item"><div class="dot" style="background:var(--orange)"></div>test_security.py</div>
+        <div class="sidebar-item" style="color:var(--muted);font-size:10px">Couverture cible ≥ 70%</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-header" style="background:var(--muted)">Semaine S2</div>
+      <div class="sidebar-body">
+        <div class="sidebar-item"><div class="dot" style="background:var(--green)"></div>Architecture ✅</div>
+        <div class="sidebar-item"><div class="dot" style="background:var(--green)"></div>UML composants ✅</div>
+        <div class="sidebar-item"><div class="dot" style="background:var(--green)"></div>Structure Git ✅</div>
+        <div class="sidebar-item"><div class="dot" style="background:var(--orange)"></div>Proto parsing → S3</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CANVAS -->
+  <div class="canvas">
+    <div class="dfd">
+
+      <!-- [0] DATA -->
+      <div class="process p-data">
+        <div class="proc-num">📁</div>
+        <div class="proc-info">
+          <div class="proc-name">DONNÉES LOCALES</div>
+          <div class="proc-desc">Source : fichiers synthétiques (PCAP · SNMP · CSV) · 30 jours · 100 ONT</div>
+          <div class="proc-files">
+            <span class="file-chip fc-purple">traces/*.pcap</span>
+            <span class="file-chip fc-purple">snmp/*.txt</span>
+            <span class="file-chip fc-purple">csv/kpi_olt_port_1.csv</span>
+            <span class="file-chip fc-purple">csv/ont_status_timeseries.csv</span>
+          </div>
+        </div>
+        <div class="proc-libs">
+          <span class="lib-chip lc-muted">Données synthétiques</span>
+          <span class="lib-chip lc-muted">Anomalies injectées</span>
+        </div>
+      </div>
+
+      <div class="dfd-arrow">
+        <div class="arrow-spacer"></div>
+        <div class="arrow-content">
+          <div class="arrow-line"></div>
+          <span class="arrow-label">parse_*(filepath) → appel depuis UI</span>
+        </div>
+      </div>
+
+      <!-- [1] PARSING -->
+      <div class="process p-parsing">
+        <div class="proc-num">1</div>
+        <div class="proc-info">
+          <div class="proc-name">[1] PARSING</div>
+          <div class="proc-desc">Extraction et normalisation des données brutes → DataFrame pandas unifié</div>
+          <div class="proc-files">
+            <span class="file-chip fc-blue">parse_pcap.py</span>
+            <span class="file-chip fc-blue">parse_snmp.py</span>
+            <span class="file-chip fc-blue">parse_csv.py</span>
+          </div>
+        </div>
+        <div class="proc-libs">
+          <span class="lib-chip lc-blue">scapy 2.5</span>
+          <span class="lib-chip lc-green">pandas 2.0</span>
+          <span class="lib-chip lc-muted">re (stdlib)</span>
+        </div>
+      </div>
+
+      <div class="dfd-arrow">
+        <div class="arrow-spacer"></div>
+        <div class="arrow-content">
+          <div class="arrow-line"></div>
+          <span class="arrow-label">df_brut → DataFrame[timestamp, src_ip, bytes_in, bytes_out, oid, value]</span>
+        </div>
+      </div>
+
+      <!-- [2] KPI -->
+      <div class="process p-kpi">
+        <div class="proc-num">2</div>
+        <div class="proc-info">
+          <div class="proc-name">[2] KPI & BUDGET OPTIQUE</div>
+          <div class="proc-desc">Calcul débit Rx/Tx, taux erreurs, états ONT, budget optique (dB) · ≤ 1s/10k pts</div>
+          <div class="proc-files">
+            <span class="file-chip fc-green">kpi_builder.py</span>
+            <span class="file-chip fc-green">budget_optique.py</span>
+          </div>
+        </div>
+        <div class="proc-libs">
+          <span class="lib-chip lc-green">pandas 2.0</span>
+          <span class="lib-chip lc-muted">numpy 1.24</span>
+          <span class="lib-chip lc-muted">scipy 1.11</span>
+        </div>
+      </div>
+
+      <div class="dfd-arrow">
+        <div class="arrow-spacer"></div>
+        <div class="arrow-content">
+          <div class="arrow-line"></div>
+          <span class="arrow-label">df_kpi → DataFrame[debit_rx_mbps, utilization_pct, error_rate_pct, ont_status, budget_db]</span>
+        </div>
+      </div>
+
+      <!-- [3] IA -->
+      <div class="process p-ia">
+        <div class="proc-num">3</div>
+        <div class="proc-info">
+          <div class="proc-name">[3] DÉTECTION IA + PRÉVISION</div>
+          <div class="proc-desc">Isolation Forest (anomalies) · Seuils déterministes · Régression linéaire (tendance 1h)</div>
+          <div class="proc-files">
+            <span class="file-chip fc-orange">ml_local.py</span>
+            <span class="file-chip fc-orange">rules_engine.py</span>
+            <span class="file-chip fc-orange">forecast.py</span>
+          </div>
+        </div>
+        <div class="proc-libs">
+          <span class="lib-chip lc-orange">scikit-learn 1.3</span>
+          <span class="lib-chip lc-orange">IsolationForest</span>
+          <span class="lib-chip lc-muted">LinearRegression</span>
+        </div>
+      </div>
+
+      <div class="dfd-arrow">
+        <div class="arrow-spacer"></div>
+        <div class="arrow-content">
+          <div class="arrow-line"></div>
+          <span class="arrow-label">df_kpi+anomalies → anomaly_flag, anomaly_score, rule_alarm, risk_score, forecast_values</span>
+        </div>
+      </div>
+
+      <!-- [4] SÉCURITÉ -->
+      <div class="process p-sec">
+        <div class="proc-num">4</div>
+        <div class="proc-info">
+          <div class="proc-name">[4] SÉCURITÉ SNMP</div>
+          <div class="proc-desc">Détection SNMPv2c (community strings) · Recommandations v3 authPriv · Score conformité 0–100</div>
+          <div class="proc-files">
+            <span class="file-chip fc-red">snmp_audit.py</span>
+            <span class="file-chip fc-red">baselines/ (SHA-256+AES-256)</span>
+          </div>
+        </div>
+        <div class="proc-libs">
+          <span class="lib-chip lc-muted">re (stdlib)</span>
+          <span class="lib-chip lc-muted">pathlib (stdlib)</span>
+        </div>
+      </div>
+
+      <div class="dfd-arrow">
+        <div class="arrow-spacer"></div>
+        <div class="arrow-content">
+          <div class="arrow-line"></div>
+          <span class="arrow-label">df_kpi+anomalies + rapport_conformite{score, alerts, recommendations}</span>
+        </div>
+      </div>
+
+      <!-- [5] UI -->
+      <div class="process p-ui">
+        <div class="proc-num">5</div>
+        <div class="proc-info">
+          <div class="proc-name">[5] INTERFACE UTILISATEUR</div>
+          <div class="proc-desc">Tkinter ttk.Notebook · 4 onglets (KPIs / Alarmes / Prévision / Sécurité) · Rendu ≤ 1.5s</div>
+          <div class="proc-files">
+            <span class="file-chip fc-teal">app.py</span>
+          </div>
+        </div>
+        <div class="proc-libs">
+          <span class="lib-chip lc-teal">tkinter</span>
+          <span class="lib-chip lc-teal">matplotlib</span>
+          <span class="lib-chip lc-muted">FigureCanvasTkAgg</span>
+        </div>
+      </div>
+
+      <div class="dfd-arrow">
+        <div class="arrow-spacer"></div>
+        <div class="arrow-content">
+          <div class="arrow-line"></div>
+          <span class="arrow-label">df_kpi + rapport + figures matplotlib → generate_pdf()</span>
+        </div>
+      </div>
+
+      <!-- [6] RAPPORT -->
+      <div class="process p-report">
+        <div class="proc-num">6</div>
+        <div class="proc-info">
+          <div class="proc-name">[6] RAPPORTS PDF</div>
+          <div class="proc-desc">Export PDF complet : KPIs + graphiques + anomalies + conformité sécurité · Format PDF/A</div>
+          <div class="proc-files">
+            <span class="file-chip fc-amber">pdf_generator.py</span>
+            <span class="file-chip fc-amber">templates/</span>
+            <span class="file-chip fc-amber">reports/*.pdf</span>
+          </div>
+        </div>
+        <div class="proc-libs">
+          <span class="lib-chip lc-amber">reportlab 4.0</span>
+          <span class="lib-chip lc-muted">matplotlib BytesIO</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- OUTPUTS -->
+<div class="outputs-section">
+  <div class="outputs-title">Sorties finales</div>
+  <div class="outputs-grid">
+    <div class="output-card">
+      <div class="output-icon">📄</div>
+      <div class="output-info">
+        <div class="title">Rapports PDF</div>
+        <div class="path">reports/*.pdf</div>
+      </div>
+    </div>
+    <div class="output-card">
+      <div class="output-icon">📊</div>
+      <div class="output-info">
+        <div class="title">CSV résultats</div>
+        <div class="path">KPIs + anomalies exportées</div>
+      </div>
+    </div>
+    <div class="output-card">
+      <div class="output-icon">📝</div>
+      <div class="output-info">
+        <div class="title">Logs JSON</div>
+        <div class="path">Traçabilité complète</div>
+      </div>
+    </div>
+    <div class="output-card">
+      <div class="output-icon">📦</div>
+      <div class="output-info">
+        <div class="title">Exécutable</div>
+        <div class="path">build/ PyInstaller Win/Linux</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUMMARY -->
+<div class="summary">
+  <div class="sum-card"><div class="num" style="color:var(--blue)">6</div><div class="lbl">Modules</div></div>
+  <div class="sum-card"><div class="num" style="color:var(--green)">9</div><div class="lbl">Fichiers Python</div></div>
+  <div class="sum-card"><div class="num" style="color:var(--orange)">4</div><div class="lbl">Bibliothèques clés</div></div>
+  <div class="sum-card"><div class="num" style="color:var(--red)">100%</div><div class="lbl">Offline</div></div>
+  <div class="sum-card"><div class="num" style="color:var(--teal)">≥85%</div><div class="lbl">F1-score IA</div></div>
+  <div class="sum-card"><div class="num" style="color:var(--amber)">16</div><div class="lbl">Semaines projet</div></div>
+</div>
+
+<footer>
+  NOC-Edge FTTH · Schéma Architecture + DFD Niveau 1 · Python 3.10+ · 100% Offline<br>
+  Semaine 2 — Conception & Architecture · Livrables J1–J4
+</footer>
+
+</body>
+</html>

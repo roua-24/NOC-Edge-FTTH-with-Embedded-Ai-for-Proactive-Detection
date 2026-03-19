@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+build/
+dist/
+*.spec
+.DS_Store
+reports/*.pdf
+venv/
+data_ref/

@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>UML Composants — NOC-Edge FTTH</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg:        #0d1117;
+    --surface:   #161b22;
+    --border:    #30363d;
+    --text:      #e6edf3;
+    --muted:     #8b949e;
+    --blue:      #58a6ff;
+    --blue-dim:  #1f3a5a;
+    --green:     #3fb950;
+    --green-dim: #1a3a23;
+    --orange:    #f0883e;
+    --orange-dim:#3d2010;
+    --purple:    #bc8cff;
+    --purple-dim:#2d1e4a;
+    --red:       #f85149;
+    --red-dim:   #3d1515;
+    --teal:      #39d0c0;
+    --teal-dim:  #0f2e2b;
+    --yellow:    #e3b341;
+    --yellow-dim:#2e2510;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    padding: 40px 24px;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .page-header .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+  }
+  .page-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .page-header h1 span { color: var(--blue); }
+  .page-header p {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* ─── PIPELINE ─────────────────────────────────────── */
+  .pipeline {
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .pipe-arrow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 40px;
+    position: relative;
+  }
+  .pipe-arrow::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--border), var(--blue), var(--border));
+    transform: translateX(-50%);
+  }
+  .pipe-arrow-icon {
+    background: var(--surface);
+    border: 1px solid var(--blue);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    position: relative;
+    z-index: 1;
+    color: var(--blue);
+    font-weight: bold;
+  }
+
+  /* ─── DATA FLOW LABEL ──────────────────────────────── */
+  .flow-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--blue);
+    background: var(--blue-dim);
+    border: 1px solid var(--blue);
+    border-radius: 4px;
+    padding: 2px 8px;
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+  .flow-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2px;
+  }
+
+  /* ─── COMPONENT BOX ────────────────────────────────── */
+  .component {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    cursor: default;
+  }
+  .component:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .comp-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .comp-icon { font-size: 22px; }
+  .comp-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .comp-title { font-size: 16px; font-weight: 700; flex: 1; }
+  .comp-file {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .comp-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+  }
+  .comp-section {
+    padding: 14px 16px;
+    border-right: 1px solid var(--border);
+  }
+  .comp-section:last-child { border-right: none; }
+  .comp-section-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .comp-item {
+    font-size: 12px;
+    color: var(--text);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .comp-item::before {
+    content: '▸';
+    font-size: 10px;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+  .comp-item code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    background: var(--bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--yellow);
+  }
+
+  /* ─── COLORS ───────────────────────────────────────── */
+  .c-data    { border-color: #6e40c9; }
+  .c-data    .comp-header { background: #1a0e35; border-color: #6e40c9; }
+  .c-data    .comp-badge { background: #2d1e4a; color: var(--purple); border: 1px solid var(--purple); }
+  .c-data    .comp-icon { color: var(--purple); }
+  .c-data    .comp-item::before { color: var(--purple); }
+
+  .c-parsing { border-color: var(--blue); }
+  .c-parsing .comp-header { background: #0e1f35; border-color: var(--blue); }
+  .c-parsing .comp-badge { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue); }
+  .c-parsing .comp-icon { color: var(--blue); }
+  .c-parsing .comp-item::before { color: var(--blue); }
+
+  .c-kpi     { border-color: var(--green); }
+  .c-kpi     .comp-header { background: var(--green-dim); border-color: var(--green); }
+  .c-kpi     .comp-badge { background: var(--green-dim); color: var(--green); border: 1px solid var(--green); }
+  .c-kpi     .comp-icon { color: var(--green); }
+  .c-kpi     .comp-item::before { color: var(--green); }
+
+  .c-ia      { border-color: var(--orange); }
+  .c-ia      .comp-header { background: var(--orange-dim); border-color: var(--orange); }
+  .c-ia      .comp-badge { background: var(--orange-dim); color: var(--orange); border: 1px solid var(--orange); }
+  .c-ia      .comp-icon { color: var(--orange); }
+  .c-ia      .comp-item::before { color: var(--orange); }
+
+  .c-sec     { border-color: var(--red); }
+  .c-sec     .comp-header { background: var(--red-dim); border-color: var(--red); }
+  .c-sec     .comp-badge { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
+  .c-sec     .comp-icon { color: var(--red); }
+  .c-sec     .comp-item::before { color: var(--red); }
+
+  .c-ui      { border-color: var(--teal); }
+  .c-ui      .comp-header { background: var(--teal-dim); border-color: var(--teal); }
+  .c-ui      .comp-badge { background: var(--teal-dim); color: var(--teal); border: 1px solid var(--teal); }
+  .c-ui      .comp-icon { color: var(--teal); }
+  .c-ui      .comp-item::before { color: var(--teal); }
+
+  .c-report  { border-color: var(--yellow); }
+  .c-report  .comp-header { background: var(--yellow-dim); border-color: var(--yellow); }
+  .c-report  .comp-badge { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--yellow); }
+  .c-report  .comp-icon { color: var(--yellow); }
+  .c-report  .comp-item::before { color: var(--yellow); }
+
+  /* ─── SIDE BRANCH : Security ──────────────────────── */
+  .branch-row {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 2px;
+  }
+  .branch-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+  }
+  .branch-line {
+    width: 2px;
+    flex: 1;
+    background: linear-gradient(to bottom, var(--red), transparent);
+  }
+  .branch-h {
+    width: 100%;
+    height: 2px;
+    background: var(--red);
+  }
+  .branch-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    flex-shrink: 0;
+  }
+
+  /* ─── OUTPUTS ──────────────────────────────────────── */
+  .outputs {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .output-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .output-card .icon { font-size: 24px; margin-bottom: 8px; }
+  .output-card .title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .output-card .sub { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+  /* ─── LEGEND ───────────────────────────────────────── */
+  .legend {
+    max-width: 900px;
+    margin: 36px auto 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+  }
+  .legend h3 {
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+  }
+  .legend-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .legend-lib {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .kpi-bar {
+    max-width: 900px;
+    margin: 20px auto 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .kpi-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    text-align: center;
+  }
+  .kpi-chip .val { font-size: 20px; font-weight: 700; }
+  .kpi-chip .lbl { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="label">Diagramme UML — Composants</div>
+  <h1>NOC-Edge <span>FTTH</span> — Architecture Modulaire</h1>
+  <p>Pipeline offline Python 3.10+ · 6 modules · Flux DataFrame pandas</p>
+</div>
+
+<div class="kpi-bar">
+  <div class="kpi-chip"><div class="val" style="color:var(--blue)">6</div><div class="lbl">Modules</div></div>
+  <div class="kpi-chip"><div class="val" style="color:var(--green)">982K</div><div class="lbl">Lignes données</div></div>
+  <div class="kpi-chip"><div class="val" style="color:var(--orange)">≥85%</div><div class="lbl">F1-score cible</div></div>
+  <div class="kpi-chip"><div class="val" style="color:var(--teal)">≤1.5s</div><div class="lbl">Rendu UI</div></div>
+</div>
+
+<br>
+
+<div class="pipeline">
+
+  <!-- ── [0] DATA ── -->
+  <div class="component c-data">
+    <div class="comp-header">
+      <span class="comp-icon">📁</span>
+      <span class="comp-badge">Source</span>
+      <span class="comp-title">DONNÉES LOCALES · /data/</span>
+      <span class="comp-file">data/</span>
+    </div>
+    <div class="comp-body">
+      <div class="comp-section">
+        <div class="comp-section-title">traces/</div>
+        <div class="comp-item">Captures .pcap synthétiques (Wireshark)</div>
+        <div class="comp-item">Incidents : DoS, ARP storm, DHCP rogue</div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">snmp/</div>
+        <div class="comp-item">Snapshots snmpwalk .txt</div>
+        <div class="comp-item"><code>ifInOctets</code> <code>onuOperStatus</code></div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">csv/</div>
+        <div class="comp-item">KPIs OLT · QoS · ONT (100 ONT × 30j)</div>
+        <div class="comp-item">Labels anomalies injectés</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARROW + flow label -->
+  <div class="flow-row"><span class="flow-label">fichiers .pcap / .txt / .csv → parse_*(filepath)</span></div>
+  <div class="pipe-arrow"><div class="pipe-arrow-icon">▼</div></div>
+
+  <!-- ── [1] PARSING ── -->
+  <div class="component c-parsing">
+    <div class="comp-header">
+      <span class="comp-icon">🔍</span>
+      <span class="comp-badge">[1] Parsing</span>
+      <span class="comp-title">MODULE PARSING</span>
+      <span class="comp-file">src/parsing/</span>
+    </div>
+    <div class="comp-body">
+      <div class="comp-section">
+        <div class="comp-section-title">Interfaces fournies</div>
+        <div class="comp-item"><code>parse_pcap(path)</code> → df</div>
+        <div class="comp-item"><code>parse_snmp(path)</code> → df</div>
+        <div class="comp-item"><code>parse_csv(path)</code> → df</div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">Responsabilités</div>
+        <div class="comp-item">Extraction couches Scapy (IP/TCP/UDP)</div>
+        <div class="comp-item">Regex OIDs SNMP → valeurs numériques</div>
+        <div class="comp-item">Normalisation timestamp (datetime64)</div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">Bibliothèques</div>
+        <div class="comp-item"><code>scapy</code> · PCAP parsing</div>
+        <div class="comp-item"><code>pandas</code> · read_csv</div>
+        <div class="comp-item"><code>re</code> · patterns OID</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-row"><span class="flow-label">df_brut → DataFrame[timestamp, src_ip, bytes_in, bytes_out, errors, oid, value]</span></div>
+  <div class="pipe-arrow"><div class="pipe-arrow-icon">▼</div></div>
+
+  <!-- ── [2] KPI ── -->
+  <div class="component c-kpi">
+    <div class="comp-header">
+      <span class="comp-icon">📊</span>
+      <span class="comp-badge">[2] KPI</span>
+      <span class="comp-title">MODULE KPI</span>
+      <span class="comp-file">src/kpi/</span>
+    </div>
+    <div class="comp-body">
+      <div class="comp-section">
+        <div class="comp-section-title">Interfaces fournies</div>
+        <div class="comp-item"><code>compute_kpis(df)</code> → df_kpi</div>
+        <div class="comp-item"><code>compute_optical_budget(dist, split)</code></div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">KPIs calculés</div>
+        <div class="comp-item">Débit Rx/Tx (Mbit/s) · utilisation %</div>
+        <div class="comp-item">Taux d'erreurs · états ONT (UP/DOWN)</div>
+        <div class="comp-item">Budget optique (dB) · marge système</div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">Formule clé</div>
+        <div class="comp-item"><code>Δoctets×8 / Δt / 1e6</code></div>
+        <div class="comp-item"><code>pandas</code> · <code>numpy</code></div>
+        <div class="comp-item">Perf : ≤1s / 10 000 pts</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-row"><span class="flow-label">df_kpi → DataFrame[debit_rx_mbps, utilization_pct, error_rate_pct, ont_status, budget_db]</span></div>
+  <div class="pipe-arrow"><div class="pipe-arrow-icon">▼</div></div>
+
+  <!-- ── [3] DÉTECTION IA ── -->
+  <div class="component c-ia">
+    <div class="comp-header">
+      <span class="comp-icon">🤖</span>
+      <span class="comp-badge">[3] IA</span>
+      <span class="comp-title">MODULE DÉTECTION IA</span>
+      <span class="comp-file">src/detection/</span>
+    </div>
+    <div class="comp-body">
+      <div class="comp-section">
+        <div class="comp-section-title">Interfaces fournies</div>
+        <div class="comp-item"><code>detect_anomalies(df_kpi)</code></div>
+        <div class="comp-item"><code>apply_rules(df_kpi)</code></div>
+        <div class="comp-item"><code>forecast_trend(df_kpi)</code></div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">Algorithmes</div>
+        <div class="comp-item">Isolation Forest (contamination=5%)</div>
+        <div class="comp-item">Seuils déterministes (util>85%, lat>100ms)</div>
+        <div class="comp-item">Régression linéaire (tendance horizon 1h)</div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">Sorties</div>
+        <div class="comp-item"><code>anomaly_flag</code> (-1/+1)</div>
+        <div class="comp-item"><code>anomaly_score</code> (float)</div>
+        <div class="comp-item"><code>risk_score</code> (0–100)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BRANCH VERS SÉCURITÉ -->
+  <div class="flow-row"><span class="flow-label">df_kpi+anomalies → anomaly_flag, anomaly_score, rule_alarm, risk_score, forecast_values</span></div>
+  <div class="pipe-arrow"><div class="pipe-arrow-icon">▼</div></div>
+
+  <!-- ── [4] SÉCURITÉ (side branch) ── -->
+  <div class="component c-sec" style="margin-bottom:4px">
+    <div class="comp-header">
+      <span class="comp-icon">🔒</span>
+      <span class="comp-badge">[4] Sécurité</span>
+      <span class="comp-title">MODULE SÉCURITÉ SNMP</span>
+      <span class="comp-file">src/security/</span>
+    </div>
+    <div class="comp-body">
+      <div class="comp-section">
+        <div class="comp-section-title">Interfaces fournies</div>
+        <div class="comp-item"><code>audit_snmp(snmp_dir)</code> → rapport</div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">Analyse</div>
+        <div class="comp-item">Détection community strings SNMPv2c</div>
+        <div class="comp-item">Vérification authPriv (SHA-256+AES-256)</div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">Sorties</div>
+        <div class="comp-item"><code>score</code> conformité (0–100)</div>
+        <div class="comp-item"><code>alerts</code> + <code>recommendations</code></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-row"><span class="flow-label">df_kpi+anomalies + rapport_conformite → [UI] et [RAPPORT]</span></div>
+  <div class="pipe-arrow"><div class="pipe-arrow-icon">▼</div></div>
+
+  <!-- ── [5] UI ── -->
+  <div class="component c-ui">
+    <div class="comp-header">
+      <span class="comp-icon">🖥️</span>
+      <span class="comp-badge">[5] UI</span>
+      <span class="comp-title">MODULE INTERFACE</span>
+      <span class="comp-file">src/ui/app.py</span>
+    </div>
+    <div class="comp-body">
+      <div class="comp-section">
+        <div class="comp-section-title">Onglets</div>
+        <div class="comp-item">KPIs (courbes débit/utilisation)</div>
+        <div class="comp-item">Alarmes (règles + IA)</div>
+        <div class="comp-item">Prévision + score risque</div>
+        <div class="comp-item">Sécurité SNMP + score</div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">Stack technique</div>
+        <div class="comp-item"><code>tkinter.ttk.Notebook</code></div>
+        <div class="comp-item"><code>FigureCanvasTkAgg</code></div>
+        <div class="comp-item">Downsampling ≤1000 pts graphique</div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">Contrainte</div>
+        <div class="comp-item">Rendu ≤ 1,5 s (10 000 pts)</div>
+        <div class="comp-item">100% offline (aucun réseau)</div>
+        <div class="comp-item">Bouton export PDF intégré</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-row"><span class="flow-label">figures matplotlib + df_kpi + rapport → generate_pdf()</span></div>
+  <div class="pipe-arrow"><div class="pipe-arrow-icon">▼</div></div>
+
+  <!-- ── [6] RAPPORT ── -->
+  <div class="component c-report">
+    <div class="comp-header">
+      <span class="comp-icon">📄</span>
+      <span class="comp-badge">[6] Rapport</span>
+      <span class="comp-title">MODULE RAPPORTS PDF</span>
+      <span class="comp-file">src/reports/</span>
+    </div>
+    <div class="comp-body">
+      <div class="comp-section">
+        <div class="comp-section-title">Interfaces fournies</div>
+        <div class="comp-item"><code>generate_pdf(df_kpi, rapport, figures)</code></div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">Contenu PDF</div>
+        <div class="comp-item">KPI + graphiques matplotlib (BytesIO)</div>
+        <div class="comp-item">Anomalies détectées · conformité SNMP</div>
+      </div>
+      <div class="comp-section">
+        <div class="comp-section-title">Bibliothèque</div>
+        <div class="comp-item"><code>reportlab</code> · SimpleDocTemplate</div>
+        <div class="comp-item">Format PDF/A professionnel</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pipe-arrow"><div class="pipe-arrow-icon">▼</div></div>
+</div>
+
+<!-- OUTPUTS -->
+<div class="outputs">
+  <div class="output-card">
+    <div class="icon">📄</div>
+    <div class="title">Rapports PDF</div>
+    <div class="sub">reports/*.pdf</div>
+  </div>
+  <div class="output-card">
+    <div class="icon">📊</div>
+    <div class="title">CSV résultats</div>
+    <div class="sub">KPIs + anomalies</div>
+  </div>
+  <div class="output-card">
+    <div class="icon">📝</div>
+    <div class="title">Logs JSON</div>
+    <div class="sub">Traçabilité ops</div>
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <h3>Bibliothèques — Correspondance modules</h3>
+  <div class="legend-grid">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div><div><div>Parsing PCAP</div><div class="legend-lib">scapy ≥ 2.5</div></div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div><div><div>DataFrames</div><div class="legend-lib">pandas ≥ 2.0 + numpy</div></div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div><div><div>IA légère</div><div class="legend-lib">scikit-learn ≥ 1.3</div></div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div><div><div>UI offline</div><div class="legend-lib">tkinter + matplotlib</div></div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div><div><div>Export PDF</div><div class="legend-lib">reportlab ≥ 4.0</div></div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><div><div>Audit SNMP</div><div class="legend-lib">re · pathlib (stdlib)</div></div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div><div><div>Packaging</div><div class="legend-lib">pyinstaller ≥ 6.0</div></div></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--muted)"></div><div><div>Calcul opt.</div><div class="legend-lib">scipy ≥ 1.11</div></div></div>
+  </div>
+</div>
+
+<footer>
+  NOC-Edge FTTH · Diagramme UML Composants · Python 3.10+ · Pipeline 100% offline<br>
+  Généré automatiquement · Semaine 2 — Conception & Architecture
+</footer>
+
+</body>
+</html>
