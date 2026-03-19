@@ -21,40 +21,46 @@ print(f"[gen_kpi] Génération de {n} points sur {N_DAYS} jours...")
 heure_du_jour = np.tile(np.arange(288), N_DAYS)
 profil_jour   = 0.5 + 0.4 * np.sin(2 * np.pi * heure_du_jour / 288 - np.pi / 2)
 
-bytes_in        = (profil_jour * 600e6 + np.random.normal(0, 20e6, n)).clip(50e6, 900e6)
-bytes_out       = (bytes_in * 0.6     + np.random.normal(0, 10e6, n)).clip(30e6, 600e6)
-if_errors       = np.random.poisson(lam=2, size=n).astype(float)
-utilization_pct = (bytes_in / 900e6 * 100).clip(5, 99)
+ifInOctets_bytes  = (profil_jour * 600e6 + np.random.normal(0, 20e6, n)).clip(50e6, 900e6)
+ifOutOctets_bytes = (ifInOctets_bytes * 0.6 + np.random.normal(0, 10e6, n)).clip(30e6, 600e6)
+ifInErrors        = np.random.poisson(lam=2, size=n).astype(float)
+ifOutErrors       = np.random.poisson(lam=1, size=n).astype(float)
+utilization_pct   = (ifInOctets_bytes / 900e6 * 100).clip(5, 99)
 
 # ── Injection d'anomalies ──────────────────────────────────────
-anomaly_flag = np.zeros(n, dtype=int)
+label_anomaly = np.zeros(n, dtype=int)
 
-idx_sat             = slice(7*288 + 180, 7*288 + 204)
-bytes_in[idx_sat]        *= 5.5
-utilization_pct[idx_sat]  = 99.0
-anomaly_flag[idx_sat]     = 1
+# Anomalie 1 : saturation OLT (j7, 2h)
+idx_sat = slice(7*288 + 180, 7*288 + 204)
+ifInOctets_bytes[idx_sat]  *= 5.5
+utilization_pct[idx_sat]    = 99.0
+label_anomaly[idx_sat]      = 1
 
-idx_err              = slice(14*288 + 60, 14*288 + 72)
-if_errors[idx_err]       += np.random.poisson(50, 12)
-anomaly_flag[idx_err]     = 1
+# Anomalie 2 : burst d'erreurs (j14, 1h)
+idx_err = slice(14*288 + 60, 14*288 + 72)
+ifInErrors[idx_err]        += np.random.poisson(50, 12)
+ifOutErrors[idx_err]       += np.random.poisson(20, 12)
+label_anomaly[idx_err]      = 1
 
-idx_down             = slice(21*288 + 96, 21*288 + 132)
-bytes_in[idx_down]        *= 0.05
-bytes_out[idx_down]       *= 0.05
-utilization_pct[idx_down]  = 2.0
-anomaly_flag[idx_down]    = 1
+# Anomalie 3 : ONT down — chute de trafic (j21, 3h)
+idx_down = slice(21*288 + 96, 21*288 + 132)
+ifInOctets_bytes[idx_down]  *= 0.05
+ifOutOctets_bytes[idx_down] *= 0.05
+utilization_pct[idx_down]    = 2.0
+label_anomaly[idx_down]      = 1
 
-pct = anomaly_flag.sum() / n * 100
-print(f"[gen_kpi] Anomalies injectées : {anomaly_flag.sum()} points ({pct:.1f}%)")
+pct = label_anomaly.sum() / n * 100
+print(f"[gen_kpi] Anomalies injectées : {label_anomaly.sum()} points ({pct:.1f}%)")
 
 # ── Assemblage & sauvegarde ────────────────────────────────────
 df = pd.DataFrame({
-    "timestamp"       : timestamps,
-    "bytes_in"        : bytes_in.astype(int),
-    "bytes_out"       : bytes_out.astype(int),
-    "if_errors"       : if_errors.astype(int),
-    "utilization_pct" : utilization_pct.round(2),
-    "anomaly_flag"    : anomaly_flag,
+    "timestamp"        : timestamps,
+    "ifInOctets_bytes" : ifInOctets_bytes.astype(int),
+    "ifOutOctets_bytes": ifOutOctets_bytes.astype(int),
+    "ifInErrors"       : ifInErrors.astype(int),
+    "ifOutErrors"      : ifOutErrors.astype(int),
+    "utilization_pct"  : utilization_pct.round(2),
+    "label_anomaly"    : label_anomaly,
 })
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -62,4 +68,5 @@ df.to_csv(OUTPUT_FILE, index=False)
 
 print(f"[gen_kpi] ✓ Fichier généré : {OUTPUT_FILE}")
 print(f"[gen_kpi] ✓ Shape : {df.shape}")
-print(df.head(3).to_string())
+print(f"[gen_kpi] ✓ Colonnes : {list(df.columns)}")
+print(df.head(2).to_string())

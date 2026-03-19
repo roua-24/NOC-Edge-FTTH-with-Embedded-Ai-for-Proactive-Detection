@@ -1,0 +1,6 @@
+IF-MIB::ifInOctets.1 = Counter32: 8402218
+IF-MIB::ifOutOctets.1 = Counter32: 4526029
+IF-MIB::ifInErrors.1 = Counter32: 1
+IF-MIB::ifOutErrors.1 = Counter32: 1
+IF-MIB::ifSpeed.1 = Gauge32: 100000000
+SNMPv3::securityLevel.0 = STRING: noAuthNoPriv
