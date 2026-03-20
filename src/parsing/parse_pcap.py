@@ -1,74 +1,85 @@
-"""
-Module : PARSING — parse_pcap.py
-Rôle   : Lire les fichiers .pcap synthétiques et extraire les flux réseau
-Entrée : chemin vers un fichier .pcap (str | Path)
-Sortie : pandas.DataFrame avec colonnes normalisées
-
-Colonnes produites :
-    timestamp  (datetime64)  — horodatage du paquet
-    src_ip     (str)          — adresse IP source
-    dst_ip     (str)          — adresse IP destination
-    protocol   (str)          — TCP / UDP / ICMP / ARP / DHCP
-    src_port   (int)          — port source (0 si non applicable)
-    dst_port   (int)          — port destination (0 si non applicable)
-    length     (int)          — taille du paquet en octets
-    direction  (str)          — 'rx' ou 'tx' (à déduire selon l'OLT ref)
-"""
-
 import pandas as pd
+import logging
 from pathlib import Path
 
+logging.basicConfig(level=logging.INFO,
+                    format="[parse_pcap] %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
-# ── Constantes ──────────────────────────────────────────────────────────────
-PROTO_MAP = {1: "ICMP", 6: "TCP", 17: "UDP"}
-OLT_MGMT_IP = "192.168.100.1"   # IP de référence OLT (fictive)
+# Colonnes attendues dans pcap_flows_summary.csv
+REQUIRED_COLS = ["timestamp", "src_ip", "dst_ip",
+                 "protocol", "packets", "bytes", "label_suspicious"]
 
 
-def parse_pcap(filepath: str | Path) -> pd.DataFrame:
+def parse_pcap(path: str) -> pd.DataFrame:
     """
-    Lit un fichier .pcap et retourne un DataFrame normalisé.
+    Lit un fichier de flux PCAP (format CSV simulé) et retourne
+    un DataFrame normalisé.
 
-    Parameters
-    ----------
-    filepath : str | Path
-        Chemin vers le fichier .pcap à parser.
+    Note : le dataset utilise un résumé CSV des flux réseau
+    (pcap_flows_summary.csv) car les fichiers .pcap binaires
+    nécessitent Scapy et une infrastructure réseau réelle.
+    Ce parseur lit le résumé synthétique produit par l'encadrant.
 
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame avec les colonnes : timestamp, src_ip, dst_ip,
-        protocol, src_port, dst_port, length, direction.
+    Args:
+        path : chemin vers pcap_flows_summary.csv
 
-    Raises
-    ------
-    FileNotFoundError
-        Si le fichier n'existe pas.
-    ValueError
-        Si le fichier n'est pas un .pcap valide.
+    Returns:
+        pd.DataFrame avec colonnes :
+        timestamp, src_ip, dst_ip, protocol,
+        packets, bytes, label_suspicious
     """
-    # TODO S3 : implémenter avec Scapy
-    # from scapy.all import rdpcap, IP, TCP, UDP, ICMP
-    # packets = rdpcap(str(filepath))
-    # rows = []
-    # for pkt in packets:
-    #     if IP not in pkt:
-    #         continue
-    #     row = {
-    #         "timestamp": pd.Timestamp(pkt.time, unit="s"),
-    #         "src_ip":    pkt[IP].src,
-    #         "dst_ip":    pkt[IP].dst,
-    #         "protocol":  PROTO_MAP.get(pkt[IP].proto, str(pkt[IP].proto)),
-    #         "src_port":  pkt[TCP].sport if TCP in pkt else (pkt[UDP].sport if UDP in pkt else 0),
-    #         "dst_port":  pkt[TCP].dport if TCP in pkt else (pkt[UDP].dport if UDP in pkt else 0),
-    #         "length":    len(pkt),
-    #         "direction": "tx" if pkt[IP].src == OLT_MGMT_IP else "rx",
-    #     }
-    #     rows.append(row)
-    # return pd.DataFrame(rows)
-    raise NotImplementedError("parse_pcap — implémentation prévue en S3")
+    path = Path(path)
+
+    if not path.exists():
+        raise FileNotFoundError(f"Fichier introuvable : {path}")
+
+    logger.info(f"Lecture '{path.name}'...")
+
+    try:
+        df = pd.read_csv(path, parse_dates=["timestamp"])
+
+        # Validation colonnes obligatoires
+        missing = [c for c in REQUIRED_COLS if c not in df.columns]
+        if missing:
+            raise ValueError(f"Colonnes manquantes : {missing}")
+
+        # Gestion NaN
+        n_nan = df.isnull().sum().sum()
+        if n_nan > 0:
+            logger.warning(f"{n_nan} NaN detectes - application ffill()")
+            df = df.ffill().dropna()
+
+        # Tri chronologique
+        df = df.sort_values("timestamp").reset_index(drop=True)
+
+        # Optimisation types
+        df["protocol"] = df["protocol"].astype("category")
+        df["packets"]  = df["packets"].astype("int32")
+        df["bytes"]    = df["bytes"].astype("int32")
+
+        n_suspicious = df["label_suspicious"].sum()
+        logger.info(f"[OK] {len(df):,} flux | "
+                    f"suspects : {n_suspicious} ({n_suspicious/len(df)*100:.1f}%)")
+
+        return df
+
+    except pd.errors.ParserError as e:
+        logger.error(f"Erreur parsing : {e}")
+        return pd.DataFrame()
 
 
-def get_protocol_stats(df: pd.DataFrame) -> pd.DataFrame:
-    """Retourne un DataFrame de statistiques par protocole (count, bytes_total)."""
-    # TODO S3
-    raise NotImplementedError
+if __name__ == "__main__":
+    print("--- Test parse_pcap() ---")
+    df = parse_pcap("data/traces/pcap_flows_summary.csv")
+
+    if not df.empty:
+        print(f"Shape        : {df.shape}")
+        print(f"Colonnes     : {list(df.columns)}")
+        print(f"Protocoles   : {df['protocol'].value_counts().to_dict()}")
+        print(f"Periode      : {df['timestamp'].min()} -> {df['timestamp'].max()}")
+        print(df.head(3).to_string())
+
+        taux = len(df) / 100000 * 100
+        print(f"\nResultat     : {len(df):,}/100,000 flux parses ({taux:.0f}%)")
+        print(f"CDC >= 90%   : {'OK' if taux >= 90 else 'KO'}")
