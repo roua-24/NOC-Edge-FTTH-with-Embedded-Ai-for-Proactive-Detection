@@ -1,4 +1,4 @@
 GPON-MIB::onuOperStatus.105 = INTEGER: 1
-GPON-MIB::rxPower.105 = Gauge32: -21.8
-GPON-MIB::txPower.105 = Gauge32: 1.94
-IF-MIB::ifInErrors.105 = Counter32: 7
+GPON-MIB::rxPower.105 = Gauge32: -26.75
+GPON-MIB::txPower.105 = Gauge32: 1.81
+IF-MIB::ifInErrors.105 = Counter32: 3
