@@ -10,3 +10,5 @@ dist/
 reports/*.pdf
 venv/
 data_ref/
+.coverage
+.pytest_cache/
