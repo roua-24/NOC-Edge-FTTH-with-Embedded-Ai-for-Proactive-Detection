@@ -70,7 +70,7 @@ def parse_csv(path: str, dtype: str) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     tests = [
         ("data/csv/kpi_olt_port_1.csv",           "kpi"),
         ("data/csv/qos_metrics.csv",              "qos"),
@@ -94,4 +94,4 @@ if __name__ == "__main__":
     print(f"\n{'─'*50}")
     print(f"Résultat : {succes}/{len(tests)} fichiers parsés avec succès")
     taux = succes / len(tests) * 100
-print(f"Taux de parsing : {taux:.0f}% (CDC exige >= 90%) — {'OK' if taux >= 90 else 'INSUFFISANT'}")
+    print(f"Taux de parsing : {taux:.0f}% (CDC exige >= 90%) — {'OK' if taux >= 90 else 'INSUFFISANT'}")

@@ -121,7 +121,7 @@ def parse_snmp_dir(snmp_dir: str) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     print("─── Test parse_snmp() — fichier OLT ───")
     df_olt = parse_snmp("data/snmp/snmpwalk_olt_port_1.txt")
     print(df_olt.to_string())
