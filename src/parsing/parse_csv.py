@@ -1,3 +1,17 @@
+"""
+src/parsing/parse_csv.py — CSV Parser
+======================================
+SPRINT 3 PATCH — one change only over the existing file:
+  Added in the dtype == "ont" block:
+      df["onuOperStatus"] = df["onuOperStatus"].astype(str).str.lower().str.strip()
+
+  This fixes OFFLINE = 0 on the Dashboard.
+  Root cause: ont_status_timeseries.csv may store "Up"/"Down" (capital U/D)
+  while all comparisons in tab_dashboard.py use lowercase "up"/"down".
+  Without normalization, (df["onuOperStatus"] == "up").sum() returns 0.
+
+Everything else is IDENTICAL to the Sprint 1-2 version.
+"""
 import pandas as pd
 import logging
 from pathlib import Path
@@ -34,7 +48,9 @@ def parse_csv(path: str, dtype: str) -> pd.DataFrame:
     path = Path(path)
 
     if dtype not in SCHEMAS:
-        raise ValueError(f"dtype '{dtype}' inconnu. Valeurs acceptées : {list(SCHEMAS.keys())}")
+        raise ValueError(
+            f"dtype '{dtype}' inconnu. Valeurs acceptées : {list(SCHEMAS.keys())}"
+        )
 
     if not path.exists():
         raise FileNotFoundError(f"Fichier introuvable : {path}")
@@ -47,7 +63,9 @@ def parse_csv(path: str, dtype: str) -> pd.DataFrame:
 
         missing = [c for c in SCHEMAS[dtype] if c not in df.columns]
         if missing:
-            raise ValueError(f"Colonnes manquantes dans '{path.name}': {missing}")
+            raise ValueError(
+                f"Colonnes manquantes dans '{path.name}': {missing}"
+            )
 
         n_nan = df.isnull().sum().sum()
         if n_nan > 0:
@@ -62,6 +80,19 @@ def parse_csv(path: str, dtype: str) -> pd.DataFrame:
             df["rx_power_dBm"] = df["rx_power_dBm"].astype("float32")
             df["tx_power_dBm"] = df["tx_power_dBm"].astype("float32")
 
+            # ── SPRINT 3 PATCH ────────────────────────────────────────────
+            # Normalize onuOperStatus to lowercase so that comparisons like
+            # (df["onuOperStatus"] == "up") work regardless of how the CSV
+            # stores the value ("Up", "UP", "up", " up ", etc.).
+            # Without this, OFFLINE count on the Dashboard is always 0.
+            df["onuOperStatus"] = (
+                df["onuOperStatus"]
+                .astype(str)
+                .str.lower()
+                .str.strip()
+            )
+            # ── END SPRINT 3 PATCH ────────────────────────────────────────
+
         logger.info(f"✓ {len(df):,} lignes | colonnes : {list(df.columns)}")
         return df
 
@@ -70,7 +101,7 @@ def parse_csv(path: str, dtype: str) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-if __name__ == "__main__": # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     tests = [
         ("data/csv/kpi_olt_port_1.csv",           "kpi"),
         ("data/csv/qos_metrics.csv",              "qos"),
@@ -94,4 +125,7 @@ if __name__ == "__main__": # pragma: no cover
     print(f"\n{'─'*50}")
     print(f"Résultat : {succes}/{len(tests)} fichiers parsés avec succès")
     taux = succes / len(tests) * 100
-    print(f"Taux de parsing : {taux:.0f}% (CDC exige >= 90%) — {'OK' if taux >= 90 else 'INSUFFISANT'}")
+    print(
+        f"Taux de parsing : {taux:.0f}%"
+        f" (CDC exige >= 90%) — {'OK' if taux >= 90 else 'INSUFFISANT'}"
+    )

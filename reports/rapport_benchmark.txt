@@ -1,0 +1,22 @@
+======================================================================
+NOC-Edge FTTH — Rapport Stress Test KPI (S5-S6)
+Genere le : 2026-06-08 02:31:11
+Reference : CDC §2.1 — Seuil <= 1.00 s / 20,000 pts
+Methode   : timeit -n 5 (meilleur temps)
+======================================================================
+
+── Stress Test : 20 000 pts (x2 critere CDC nominal) ─────────────
+  Implementation : kpi_builder.compute_kpis() (module reel)
+  Source         : real (8640) + synthetic padding (11360)
+  N points       : 20,000
+  Fichier CSV    : kpi_olt_port_1.csv
+  Repetitions    : 5
+  Meilleur temps : 5.94 ms
+  Temps moyen    : 7.92 ms
+  Pire temps     : 10.38 ms
+  Seuil CDC      : 1000 ms
+  Marge          : x168.4
+  Statut         : OK VALIDE
+
+======================================================================
+FIN DU RAPPORT

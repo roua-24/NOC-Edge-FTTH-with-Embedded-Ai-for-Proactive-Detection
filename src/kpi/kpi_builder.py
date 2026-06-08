@@ -1,18 +1,18 @@
 """
 Module : KPI — kpi_builder.py
-Role   : Calcul des KPIs FTTH/GPON a partir du DataFrame brut
-Entree : DataFrame brut (parse_csv dtype=kpi)
-Sortie : DataFrame KPI enrichi avec colonnes calculees
+Role   : Calculation of FTTH/GPON KPIs from the raw DataFrame
+Input  : Raw DataFrame (parse_csv dtype=kpi)
+Output : Enriched KPI DataFrame with calculated columns
 
-KPIs calcules :
-    debit_rx_mbps   — debit entrant en Mbit/s
-    debit_tx_mbps   — debit sortant en Mbit/s
-    error_rate_pct  — taux d'erreurs en %
-    ont_up_count    — nombre d'ONT en etat UP (si df_ont fourni)
-    ont_down_count  — nombre d'ONT en etat DOWN (si df_ont fourni)
+Calculated KPIs:
+debit_rx_mbps   — inbound throughput in Mbit/s
+debit_tx_mbps   — outbound throughput in Mbit/s
+error_rate_pct  — error rate in %
+ont_up_count    — number of ONTs in UP state (if df_ont provided)
+ont_down_count  — number of ONTs in DOWN state (if df_ont provided)
 
-Formule debit :
-    debit_mbps = (ifInOctets_bytes * 8) / INTERVAL_SEC / 1_000_000
+Throughput Formula:
+debit_mbps = (ifInOctets_bytes * 8) / INTERVAL_SEC / 1_000_000
 """
 import pandas as pd
 import numpy as np

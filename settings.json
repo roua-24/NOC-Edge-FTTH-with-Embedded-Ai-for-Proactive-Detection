@@ -1,0 +1,11 @@
+{
+  "dataset_path": "data/csv/kpi_olt_port_1.csv",
+  "reports_path": "reports/",
+  "thresholds": {
+    "utilization_pct": 85.0,
+    "error_rate_pct": 1.0,
+    "latency_ms": 100.0,
+    "jitter_ms": 20.0,
+    "packet_loss_pct": 0.5
+  }
+}

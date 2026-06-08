@@ -1,0 +1,25 @@
+{
+  "description": "Baseline de référence SNMPv3 authPriv — NOC-Edge FTTH",
+  "reference": "RFC 3411-3418, ITU-T G.984 GPON Security, CDC §9",
+  "snmp_version": "SNMPv3",
+  "security_level": "authPriv",
+  "auth_protocol": "SHA-256",
+  "auth_algorithm": "HMAC-SHA-2-256",
+  "priv_protocol": "AES-256",
+  "priv_algorithm": "AES-256-CFB",
+  "min_auth_key_length": 32,
+  "min_priv_key_length": 32,
+  "community_strings_disabled": true,
+  "view_based_access_control": true,
+  "usm_user_model": true,
+  "recommended_engine_boots_check": true,
+  "timeliness_window_seconds": 150,
+  "prohibited_protocols": ["SNMPv1", "SNMPv2c"],
+  "prohibited_auth_protocols": ["MD5", "SHA-1"],
+  "prohibited_priv_protocols": ["DES", "3DES"],
+  "weak_communities": ["public", "private", "community", "default"],
+  "compliance_thresholds": {
+    "conforme": 80,
+    "partiellement_conforme": 50
+  }
+}

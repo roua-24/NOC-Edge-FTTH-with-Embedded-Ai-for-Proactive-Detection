@@ -1,0 +1,39 @@
+============================================================
+benchmark_ui.txt — NOC-Edge FTTH UI Render Benchmark
+S10-S11 Deliverable — CDC §2.1 ≤ 1.5s for 10 000 points
+============================================================
+
+Date        : 2026-05-30
+Platform    : Linux 6.18.5
+Python      : 3.12.3
+Backend     : matplotlib Agg (headless simulation)
+
+── RENDER TEST: render_tab_kpi(df_10k) ──────────────────
+Input rows  : 10,000
+After DS    : 1000 pts (step=10)
+Charts      : 3 (RX/TX · Utilization · Error Rate)
+
+Runs        : 5
+Avg time    : 124.9 ms
+Min time    : 96.8 ms
+Max time    : 156.4 ms
+Target      : ≤ 1500 ms
+Result      : [PASS]
+
+── DETAILS (per run) ────────────────────────────────────
+  Run 1      : 133.8 ms
+  Run 2      : 156.4 ms
+  Run 3      : 96.8 ms
+  Run 4      : 100.2 ms
+  Run 5      : 137.2 ms
+
+── NOTES ────────────────────────────────────────────────
+Measurement uses Agg backend (no display). Real Tkinter
+FigureCanvasTkAgg adds ~50-150ms overhead on Windows.
+Downsampling to 1000 pts (from 10k) is mandatory per
+README §4 to stay within the 1.5s CDC target.
+
+KPI compute: 18.3 ms (×54 margin — validated S5-S6)
+Detection  : ~50 ms (IsolationForest — estimated)
+Render     : 124.9 ms avg (this benchmark)
+============================================================
